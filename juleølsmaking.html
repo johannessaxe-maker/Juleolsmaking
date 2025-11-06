@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>🎅 Juleølsmaking 2025 🍺</title>
+<style>
+body{
+  font-family:system-ui,sans-serif;
+  background:linear-gradient(to bottom,#fffaf5,#ffeedd);
+  margin:0;padding:0;text-align:center;
+  overflow-x:hidden;
+}
+section{margin:.5rem auto;width:95%;max-width:800px;}
+input,select,button{padding:.4rem;margin:.2rem;font-size:1rem;border-radius:.4rem;border:1px solid #ccc;}
+button{background:#f4c2a0;border:none;box-shadow:0 2px 3px rgba(0,0,0,.1);}
+button:active{background:#f9b185;transform:scale(.97);}
+table{border-collapse:collapse;width:100%;margin-top:.8rem;background:#fff;border-radius:8px;overflow:hidden;}
+th,td{border:1px solid #ddd;padding:.3rem;text-align:center;}
+th{background:#f4c2a0;}
+tr:hover{background:#fff7ee;cursor:pointer;}
+.summary{background:#fff3e0;border-radius:10px;width:90%;margin:1rem auto;padding:.5rem;box-shadow:0 0 5px rgba(0,0,0,.1);}
+.winner{font-size:1.1rem;margin:.2rem 0;}
+#customType{display:none;}
+#points{width:90%;max-width:400px;text-align:center;font-size:1.2rem;}
+.shortPoeng{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;margin:auto;}
+.fullPoeng{white-space:normal;}
+#clearBtn{background:#ffb3b3;margin-top:1rem;}
+#beerButton {font-size:2.5rem;border:none;background:none;cursor:pointer;transition:transform 0.3s;}
+#beerButton:active {transform:scale(0.9);}
+@keyframes beerRoll {
+  0% {transform:rotate(0deg) scale(1);opacity:1;}
+  50% {transform:rotate(720deg) scale(8);opacity:0.8;}
+  100% {transform:rotate(1080deg) scale(1);opacity:1;}
+}
+#beerEmoji {
+  position:fixed;left:50%;top:50%;
+  transform:translate(-50%,-50%);
+  font-size:3rem;display:none;z-index:1000;
+}
+
+/* 🎄 Julete tittel */
+#title {
+  font-family:'Georgia',serif;
+  font-size:2.2rem;
+  margin-top:1.2rem;
+  color:#b30000;
+  text-shadow:0 0 8px #fff4f4,0 0 12px #ffcccc,0 0 25px #d41414;
+  animation:fadeIn 2s ease-out,snowGlow 3s infinite alternate;
+  position:relative;
+}
+@keyframes fadeIn {
+  from{opacity:0;transform:translateY(-10px);}
+  to{opacity:1;transform:translateY(0);}
+}
+@keyframes snowGlow {
+  0% {text-shadow:0 0 8px #fff4f4,0 0 12px #ffcccc,0 0 25px #d41414;}
+  100% {text-shadow:0 0 15px #ffffff,0 0 30px #ffb3b3,0 0 40px #e60000;}
+}
+#title::before,#title::after {
+  content:"❄️";
+  position:absolute;top:-10px;
+  font-size:1.3rem;animation:fall 4s linear infinite;opacity:0.8;
+}
+#title::before{left:-30px;animation-delay:0s;}
+#title::after{right:-30px;animation-delay:2s;}
+@keyframes fall {
+  0%{transform:translateY(0) rotate(0deg);opacity:0.9;}
+  100%{transform:translateY(30px) rotate(360deg);opacity:0;}
+}
+</style>
+</head>
+<body>
+
+<h1 id="title">🎅 Juleølsmaking 2025 🍻</h1>
+
+<section id="inputArea">
+  <div>
+    Navn: <input id="name" placeholder="Navn på øl">
+    Type:
+    <select id="typeSel" onchange="toggleCustomType()">
+      <option>Pils</option>
+      <option>Mørk lager</option>
+      <option>Ale</option>
+      <option>IPA</option>
+      <option>Porter / Stout</option>
+      <option>Surøl</option>
+      <option>Belgisk</option>
+      <option>Hveteøl</option>
+      <option>Fatlagret / Sterkøl</option>
+      <option>Annet (skriv inn)</option>
+    </select>
+    <input id="customType" placeholder="Skriv type">
+    Alk.%: <input type="number" id="alc" step="0.1" min="0" style="width:4rem">
+  </div>
+  <div style="margin-top:.4rem;">
+    Poeng (skriv alle med mellomrom, bruk komma eller punktum):<br>
+    <input id="points" placeholder="Eks: 7,5 8 8,25 7 9">
+  </div>
+  <button id="clearBtn" onclick="clearAll()">🧹 Tøm alt</button>
+  <div style="margin-top:1rem;">
+    <button id="beerButton" onclick="beerAnimation()">🍺</button>
+  </div>
+</section>
+
+<div id="beerEmoji">🍺</div>
+
+<section id="results">
+  <table id="beerTable">
+    <thead>
+      <tr>
+        <th>#</th><th>Navn</th><th>Type</th><th>Alk.%</th>
+        <th>Poeng</th><th>Skår</th><th>Skål!</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <div class="summary">
+    <div id="bestBeer" class="winner"></div>
+    <div id="mostAgree" class="winner"></div>
+    <div id="leastAgree" class="winner"></div>
+  </div>
+</section>
+
+<script>
+let beerList=[];
+
+// visuelle “+”
+document.addEventListener("DOMContentLoaded",()=>{
+  const points=document.getElementById("points");
+  points.addEventListener("input",()=>{
+    const raw=points.value.replace(/ +/g," ").trim();
+    points.value=raw.replace(/ /g," + ");
+  });
+  loadData();
+});
+
+function toggleCustomType(){
+  const sel=document.getElementById("typeSel");
+  document.getElementById("customType").style.display = sel.value.includes("Annet") ? "inline-block":"none";
+}
+
+// 🍺 animasjon + legg til øl
+function beerAnimation(){
+  const beer=document.getElementById("beerEmoji");
+  beer.style.display="block";
+  beer.style.animation="beerRoll 1.6s ease-in-out";
+  setTimeout(()=>{beer.style.display="none"; addBeer();},1600);
+}
+
+function addBeer(){
+  const name=document.getElementById("name").value.trim()||`Øl ${beerList.length+1}`;
+  const typeSel=document.getElementById("typeSel");
+  const type= typeSel.value.includes("Annet") ? (document.getElementById("customType").value||"Annet") : typeSel.value;
+  const alc=parseFloat(document.getElementById("alc").value.replace(",","."))||0;
+  const raw=document.getElementById("points").value.replace(/\+/g," ");
+  const parts=raw.trim().split(/\s+/);
+  const points=parts.map(x=>parseFloat(x.replace(",","."))).filter(x=>!isNaN(x));
+  if(points.length===0){alert("Skriv poeng før du legger til!");return;}
+  const avg = points.reduce((a,b)=>a+b,0)/points.length;
+  const u   = calcUenighet(points);
+  beerList.push({name,type,alc,points,avg,uenighet:u});
+  beerList.sort((a,b)=>b.avg-a.avg);
+  saveData();updateTable();clearInputs();
+}
+
+function calcUenighet(arr){
+  const avg=arr.reduce((a,b)=>a+b,0)/arr.length;
+  const v=arr.map(x=>(x-avg)**2).reduce((a,b)=>a+b,0)/arr.length;
+  return Math.sqrt(v);
+}
+
+function clearInputs(){
+  document.getElementById("name").value="";
+  document.getElementById("alc").value="";
+  document.getElementById("points").value="";
+}
+
+function getUenighetTekst(verdi){
+  if(verdi<0.2) return "🍻 Svært enige";
+  if(verdi<0.5) return "🥂 Enige";
+  if(verdi<1.0) return "😄 Litt uenige";
+  if(verdi<1.5) return "🤔 Uenige";
+  if(verdi<2.0) return "😬 Svært uenige";
+  return "🤯 Ekstremt uenige";
+}
+
+function updateTable(){
+  const tb=document.querySelector("#beerTable tbody");
+  tb.innerHTML="";
+  beerList.forEach((b,i)=>{
+    const fullPoeng=b.points.map(x=>x.toString().replace(".",",")).join(" + ");
+    const shortPoeng=fullPoeng.length>25 ? fullPoeng.slice(0,25)+" ..." : fullPoeng;
+    const avgStr=b.avg.toFixed(2).replace(".",",");
+    const uTekst=getUenighetTekst(b.uenighet);
+    const row=document.createElement("tr");
+    row.innerHTML=`
+      <td>${i+1}</td>
+      <td>${b.name}</td>
+      <td>${b.type}</td>
+      <td>${b.alc}</td>
+      <td><div class="shortPoeng">${shortPoeng}</div><div class="fullPoeng" style="display:none;">${fullPoeng}</div></td>
+      <td>${avgStr}</td>
+      <td>${uTekst}</td>`;
+    row.addEventListener("click",()=>{
+      const s=row.querySelector(".shortPoeng");
+      const f=row.querySelector(".fullPoeng");
+      const vis=s.style.display!=="none";
+      s.style.display=vis?"none":"block";
+      f.style.display=vis?"block":"none";
+    });
+    tb.appendChild(row);
+  });
+  updateSummary();
+}
+
+function updateSummary(){
+  if(beerList.length===0)return;
+  const best=beerList[0];
+  const mostAgree=beerList.reduce((a,b)=>a.uenighet<b.uenighet?a:b);
+  const leastAgree=beerList.reduce((a,b)=>a.uenighet>b.uenighet?a:b);
+  document.getElementById("bestBeer").textContent=`🏆 Årets juleøl: ${best.name}`;
+  document.getElementById("mostAgree").textContent=`🤝 Mest samstemt: ${mostAgree.name}`;
+  document.getElementById("leastAgree").textContent=`🤪 Mest uenig: ${leastAgree.name}`;
+}
+
+// Lokal lagring
+function saveData(){localStorage.setItem("juleol_2025",JSON.stringify(beerList));}
+function loadData(){
+  const saved=localStorage.getItem("juleol_2025");
+  if(saved){beerList=JSON.parse(saved);updateTable();}
+}
+function clearAll(){
+  if(confirm("Vil du slette alle registrerte øl og starte på nytt?")){
+    beerList=[];localStorage.removeItem("juleol_2025");updateTable();
+  }
+}
+</script>
+</body>
+</html>
+
+
+
+

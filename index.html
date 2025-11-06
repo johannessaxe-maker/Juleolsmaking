@@ -33,12 +33,7 @@ tr:hover{background:#fff7ee;cursor:pointer;}
   50% {transform:rotate(720deg) scale(8);opacity:0.8;}
   100% {transform:rotate(1080deg) scale(1);opacity:1;}
 }
-#beerEmoji {
-  position:fixed;left:50%;top:50%;
-  transform:translate(-50%,-50%);
-  font-size:3rem;display:none;z-index:1000;
-}
-body::before {
+  body::before {
   content: "🎅";
   position: fixed;
   top: 50%;
@@ -48,6 +43,12 @@ body::before {
   opacity: 0.08;   /* juster for mer/mindre synlig */
   pointer-events: none;
   user-select: none;
+}
+
+#beerEmoji {
+  position:fixed;left:50%;top:50%;
+  transform:translate(-50%,-50%);
+  font-size:3rem;display:none;z-index:1000;
 }
 
 /* 🎄 Julete tittel */
@@ -136,12 +137,12 @@ body::before {
 <script>
 let beerList=[];
 
-// last data ved start
 document.addEventListener("DOMContentLoaded",loadData);
 
 function toggleCustomType(){
   const sel=document.getElementById("typeSel");
-  document.getElementById("customType").style.display = sel.value.includes("Annet") ? "inline-block":"none";
+  document.getElementById("customType").style.display =
+    sel.value.includes("Annet") ? "inline-block" : "none";
 }
 
 // 🍺 animasjon + legg til øl
@@ -152,10 +153,13 @@ function beerAnimation(){
   setTimeout(()=>{beer.style.display="none"; addBeer();},1600);
 }
 
+// legg til ny øl
 function addBeer(){
   const name=document.getElementById("name").value.trim()||`Øl ${beerList.length+1}`;
   const typeSel=document.getElementById("typeSel");
-  const type= typeSel.value.includes("Annet") ? (document.getElementById("customType").value||"Annet") : typeSel.value;
+  const type= typeSel.value.includes("Annet")
+      ? (document.getElementById("customType").value||"Annet")
+      : typeSel.value;
   const alc=parseFloat(document.getElementById("alc").value.replace(",","."))||0;
   const raw=document.getElementById("points").value.trim();
   const parts=raw.split(/\s+/);
@@ -189,30 +193,43 @@ function getUenighetTekst(verdi){
   return "🤯 Ekstremt uenige";
 }
 
+// oppdatert tabell med kort/utvidet poengvisning
 function updateTable(){
   const tb=document.querySelector("#beerTable tbody");
   tb.innerHTML="";
   beerList.forEach((b,i)=>{
     const fullPoeng=b.points.map(x=>x.toString().replace(".",",")).join(" ");
-    const shortPoeng=fullPoeng.length>25 ? fullPoeng.slice(0,25)+" ..." : fullPoeng;
     const avgStr=b.avg.toFixed(2).replace(".",",");
     const uTekst=getUenighetTekst(b.uenighet);
+
+    const shortDiv=document.createElement("div");
+    shortDiv.className="shortPoeng";
+    shortDiv.textContent=fullPoeng;
+
+    const fullDiv=document.createElement("div");
+    fullDiv.className="fullPoeng";
+    fullDiv.textContent=fullPoeng;
+    fullDiv.style.display="none";
+
     const row=document.createElement("tr");
     row.innerHTML=`
       <td>${i+1}</td>
       <td>${b.name}</td>
       <td>${b.type}</td>
       <td>${b.alc}</td>
-      <td><div class="shortPoeng">${shortPoeng}</div><div class="fullPoeng" style="display:none;">${fullPoeng}</div></td>
+      <td></td>
       <td>${avgStr}</td>
       <td>${uTekst}</td>`;
+    const cell=row.children[4];
+    cell.appendChild(shortDiv);
+    cell.appendChild(fullDiv);
+
     row.addEventListener("click",()=>{
-      const s=row.querySelector(".shortPoeng");
-      const f=row.querySelector(".fullPoeng");
-      const vis=s.style.display!=="none";
-      s.style.display=vis?"none":"block";
-      f.style.display=vis?"block":"none";
+      const vis=shortDiv.style.display!=="none";
+      shortDiv.style.display=vis?"none":"block";
+      fullDiv.style.display=vis?"block":"none";
     });
+
     tb.appendChild(row);
   });
   updateSummary();
@@ -242,6 +259,8 @@ function clearAll(){
 </script>
 </body>
 </html>
+
+
 
 
 

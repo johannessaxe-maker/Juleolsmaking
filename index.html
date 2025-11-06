@@ -38,7 +38,7 @@ tr:hover{background:#fff7ee;cursor:pointer;}
   transform:translate(-50%,-50%);
   font-size:3rem;display:none;z-index:1000;
 }
-  body::before {
+body::before {
   content: "🎅";
   position: fixed;
   top: 50%;
@@ -49,7 +49,6 @@ tr:hover{background:#fff7ee;cursor:pointer;}
   pointer-events: none;
   user-select: none;
 }
-
 
 /* 🎄 Julete tittel */
 #title {
@@ -137,15 +136,8 @@ tr:hover{background:#fff7ee;cursor:pointer;}
 <script>
 let beerList=[];
 
-// visuelle “+”
-document.addEventListener("DOMContentLoaded",()=>{
-  const points=document.getElementById("points");
-  points.addEventListener("input",()=>{
-    const raw=points.value.replace(/ +/g," ").trim();
-    points.value=raw.replace(/ /g," + ");
-  });
-  loadData();
-});
+// last data ved start
+document.addEventListener("DOMContentLoaded",loadData);
 
 function toggleCustomType(){
   const sel=document.getElementById("typeSel");
@@ -165,8 +157,8 @@ function addBeer(){
   const typeSel=document.getElementById("typeSel");
   const type= typeSel.value.includes("Annet") ? (document.getElementById("customType").value||"Annet") : typeSel.value;
   const alc=parseFloat(document.getElementById("alc").value.replace(",","."))||0;
-  const raw=document.getElementById("points").value.replace(/\+/g," ");
-  const parts=raw.trim().split(/\s+/);
+  const raw=document.getElementById("points").value.trim();
+  const parts=raw.split(/\s+/);
   const points=parts.map(x=>parseFloat(x.replace(",","."))).filter(x=>!isNaN(x));
   if(points.length===0){alert("Skriv poeng før du legger til!");return;}
   const avg = points.reduce((a,b)=>a+b,0)/points.length;
@@ -201,7 +193,7 @@ function updateTable(){
   const tb=document.querySelector("#beerTable tbody");
   tb.innerHTML="";
   beerList.forEach((b,i)=>{
-    const fullPoeng=b.points.map(x=>x.toString().replace(".",",")).join(" + ");
+    const fullPoeng=b.points.map(x=>x.toString().replace(".",",")).join(" ");
     const shortPoeng=fullPoeng.length>25 ? fullPoeng.slice(0,25)+" ..." : fullPoeng;
     const avgStr=b.avg.toFixed(2).replace(".",",");
     const uTekst=getUenighetTekst(b.uenighet);
@@ -250,6 +242,8 @@ function clearAll(){
 </script>
 </body>
 </html>
+
+
 
 
 
